@@ -278,7 +278,7 @@ function backupFb(text,ok){const e=$('fbBackup');e.textContent=text;e.className=
 function panel(build){const p=$('panel');p.textContent='';if(!build){p.style.display='none';return;}p.style.display='block';build(p);}
 async function exportJson(){
  const list=Object.keys(records).sort().map(k=>records[k]);
- if(!list.length){backupFb('내보낼 기록이 아직 없어요.',false);return;}
+ if(!list.length){backupFb('내가 적은 기록은 아직 없어요. 피클 기록은 앱이 열 때마다 새로 받아 와서 이 기기에 저장하지 않아요.',false);return;}
  const text=JSON.stringify({app:'naranhi',version:1,exportedAt:kstISO(now()),records:list},null,2),name='naranhi-'+kstKey(now())+'.json';
  let done=false;
  if(dl){try{await dl.save({filename:name,data:text});done=true;}catch(e){if(e&&e.code==='declined'){backupFb('내보내기를 취소했어요.',false);return;}}}
