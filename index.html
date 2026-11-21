@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F4EFE6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="나란히">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>나란히 — 오늘의 기록</title>
+<style>
+:root{--paper:#F4EFE6;--ink:#2B2A28;--card:#FBF8F1;--line:#D8D0C0;--dim:#7C776C;--blue:#3F6FB5;--mus:#E2B93B;--green:#5E9B5A;--red:#D9503F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;line-height:1.6;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
+html{-webkit-text-size-adjust:100%}
+body{overscroll-behavior-y:contain}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;position:sticky;top:0;background:var(--paper);padding:8px 0 6px;z-index:5;border-bottom:3px solid var(--line)}
+.logo{font-weight:900;font-size:20px;display:flex;align-items:center;gap:8px}
+.logo .mk{display:inline-flex;gap:3px}
+.logo .mk i{width:9px;height:18px;border-radius:3px;background:var(--ink);display:block}
+.logo .mk i+i{background:var(--mus);border:2px solid var(--ink);transform:rotate(3deg)}
+#todayLabel{font-weight:800;font-size:15px}
+h2{font-size:14px;font-weight:900;margin:26px 0 8px;color:var(--dim);letter-spacing:.5px}
+h2:first-of-type{margin-top:6px}
+/* 두 칸: 어떤 폭에서도 같은 너비·같은 높이 */
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.cell{background:var(--card);border:3px solid var(--ink);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0;box-shadow:4px 5px 0 rgba(43,42,40,.16)}
+.today .cell{min-height:150px}
+.who{display:flex;align-items:center;gap:7px;font-weight:900;font-size:15px}
+.av{width:20px;height:20px;flex:none;border:3px solid var(--ink)}
+.av.v{border-radius:50%;background:var(--blue)}
+.av.y{border-radius:6px;background:var(--mus);transform:rotate(-6deg)}
+.text{font-size:16px;font-weight:600;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;flex:1}
+.text.empty{color:var(--dim);font-weight:500}
+.meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--dim)}
+.chip{border:2px solid var(--ink);border-radius:999px;padding:0 8px;font-size:11px;font-weight:800;color:var(--ink);background:var(--paper)}
+.chip.sample{border-style:dashed}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;font-weight:800;font-size:14px;background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:10px;padding:8px 13px;min-height:44px;cursor:pointer;touch-action:manipulation}
+button:active{transform:translateY(2px)}
+.acts button{flex:1 1 auto}
+button.go{background:var(--ink);color:var(--paper)}
+button.plain{border:0;background:none;padding:2px 0;border-bottom:3px solid var(--line);border-radius:0;min-height:0}
+button:disabled{opacity:.5;cursor:default}
+textarea{font:inherit;font-size:16px;width:100%;min-height:64px;resize:vertical;border:3px solid var(--ink);border-radius:9px;padding:7px 9px;background:#fff;color:var(--ink)}
+.fb{font-size:12px;font-weight:800;min-height:18px}
+.fb.ok{color:#3d7a3a}.fb.bad{color:#b23e30}
+/* 지난 날 */
+.day{background:var(--card);border:3px solid var(--line);border-radius:13px;margin-bottom:8px;overflow:hidden}
+.day.open{border-color:var(--ink)}
+.day>button{width:100%;text-align:left;border:0;background:none;border-radius:0;padding:13px 13px;min-height:52px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}
+.day>button .n{font-size:12px;color:var(--dim);font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.day .body{padding:0 10px 10px;display:none}
+.day.open .body{display:block}
+.day .cell{box-shadow:none;border-width:2px;padding:10px}
+.day .text{font-size:15px}
+#more{display:block;margin:14px auto 0;width:100%}
+#install{display:none;width:100%;margin-bottom:10px;background:var(--mus)}
+#noPast{color:var(--dim);font-size:14px;padding:6px 2px}
+footer{margin-top:34px;border-top:3px solid var(--line);padding-top:14px;font-size:13px;color:var(--dim)}
+footer .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+footer label{display:flex;gap:6px;align-items:center;font-weight:700;color:var(--ink);cursor:pointer}
+#panel{display:none;background:var(--card);border:3px solid var(--ink);border-radius:12px;padding:12px;margin:10px 0;color:var(--ink)}
+#panel textarea{min-height:120px;font-size:12px;font-family:ui-monospace,monospace}
+@media(max-width:420px){.wrap{padding:14px 8px 50px}.pair{gap:7px}.cell{padding:9px}.text{font-size:15px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="logo"><span class="mk"><i></i><i></i></span>나란히</div><div id="todayLabel"></div></header>
+
+<h2>오늘</h2>
+<div class="pair today" id="today"></div>
+
+<h2>지난 날들</h2>
+<div id="past"></div>
+<div id="noPast"></div>
+<button id="more">더 보기</button>
+
+<footer>
+  <button id="install">홈 화면에 앱으로 추가</button>
+  <div class="row">
+    <button id="exp">기록 내보내기 (JSON)</button>
+    <button id="imp">기록 가져오기</button>
+    <label><input type="checkbox" id="smp"> 샘플 기록 같이 보기</label>
+  </div>
+  <div id="fbBackup" class="fb"></div>
+  <div id="panel"></div>
+  <p>이 기록은 지금 쓰는 기기의 이 브라우저에만 저장돼요. 다른 기기와 자동으로 맞춰지지 않고, 암호로 잠긴 금고도 아니에요. 브라우저 데이터를 지우면 함께 사라지니 가끔 내보내기로 백업해 두세요.</p>
+  <p>날짜는 한국 시간 기준이에요. '샘플'이라고 적힌 줄은 화면을 보여주기 위한 가상의 예시예요. 피클 칸은 실시간 연동이 아니라 샘플이거나 직접 넣은 한 줄이에요.</p>
+</footer>
+<input type="file" id="file" accept=".json,application/json" hidden>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const KEY='naranhi.records.v1',SET='naranhi.settings.v1',MAXLEN=300,PAGE=30;
+const WHO={vector:{name:'피클',av:'v',empty:'아직 소식이 없어요',pastEmpty:'이 날은 적지 않았어요'},yunjin:{name:'윤진',av:'y',empty:'아직 적지 않았어요',pastEmpty:'이 날은 적지 않았어요'}};
+
+/* ---------- 시간: 전부 한국 시간(KST) 달력 기준 ---------- */
+let offset=0;const now=()=>new Date(Date.now()+offset);
+const fmtDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
+const fmtParts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+const kstKey=d=>fmtDate.format(d);
+function kstISO(d){const p={};for(const x of fmtParts.formatToParts(d))p[x.type]=x.value;return p.year+'-'+p.month+'-'+p.day+'T'+(p.hour==='24'?'00':p.hour)+':'+p.minute+':'+p.second+'+09:00';}
+function addDays(key,n){const a=key.split('-').map(Number);return new Date(Date.UTC(a[0],a[1]-1,a[2])+n*86400000).toISOString().slice(0,10);}
+function validKey(k){if(typeof k!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(k))return false;const a=k.split('-').map(Number),d=new Date(Date.UTC(a[0],a[1]-1,a[2]));return d.toISOString().slice(0,10)===k;}
+function dayLabel(key,today){const a=key.split('-').map(Number),w='일월화수목금토'[new Date(Date.UTC(a[0],a[1]-1,a[2])).getUTCDay()];
+ return (key.slice(0,4)!==today.slice(0,4)?a[0]+'년 ':'')+a[1]+'월 '+a[2]+'일 '+w+'요일';}
+function clock(iso){if(!iso)return '';const d=new Date(iso);if(isNaN(d))return '';const p={};for(const x of fmtParts.formatToParts(d))p[x.type]=x.value;let h=+p.hour%24;return (h<12?'오전 ':'오후 ')+((h%12)||12)+':'+p.minute;}
+
+/* ---------- 저장 ---------- */
+let records={},settings={sample:null},mem=null;
+function readStore(k){try{const s=localStorage.getItem(k);return s?JSON.parse(s):null;}catch(e){return null;}}
+function cleanSide(s,isVector){if(!s||typeof s!=='object'||typeof s.line!=='string'||!s.line.trim())return null;
+ const o={line:s.line.slice(0,MAXLEN)};if(isVector)o.source=s.source==='sample'?'sample':'manual';o.updatedAt=typeof s.updatedAt==='string'&&!isNaN(new Date(s.updatedAt))?s.updatedAt:null;return o;}
+function loadAll(){const r=readStore(KEY);records={};
+ if(r&&typeof r==='object')for(const k of Object.keys(r)){if(!validKey(k))continue;const v=cleanSide(r[k].vector,true),y=cleanSide(r[k].yunjin,false);if(v||y)records[k]={date:k,vector:v,yunjin:y};}
+ const s=readStore(SET);if(s&&typeof s==='object')settings=Object.assign(settings,s);}
+// 저장하고, 다시 읽어서 정말 들어갔는지 확인한다. 실패하면 false.
+function persist(next){const str=JSON.stringify(next);try{localStorage.setItem(KEY,str);return localStorage.getItem(KEY)===str;}catch(e){return false;}}
+function saveSettings(){try{localStorage.setItem(SET,JSON.stringify(settings));}catch(e){}}
+const hasReal=()=>Object.keys(records).length>0;
+const showSample=()=>settings.sample===null?!hasReal():!!settings.sample;
+
+/* ---------- 가상 샘플 (저장하지 않음, 내보내기에도 안 들어감) ---------- */
+const SV=['일정 탭에서 리스트가 깜빡이는 문제 고치는 중','아침 인사 문장을 조금 더 짧게 다듬는 중','얼굴 문양의 숨쉬는 속도 맞추는 중','알람 소리가 두 번 울리는 버그 찾는 중','길게 말해도 끝까지 알아듣는 연습 중. 오늘은 "내일 오후 세 시에 치과 예약 있으니까 두 시 반에 알려줘" 같은 문장을 한 번에 이해하는 걸 해보고 있어요','끝말잇기 단어장 늘리는 중','손전등 켜는 속도 줄이는 중','번역 결과 읽어주는 목소리 고르는 중'];
+const SY=['수학 숙제 다 함','엔트리 작품 하나 올림','친구들이랑 축구게임 테스트','동글 변환기 소개 사이트 만듦','책 한 권 다 읽음','기타 연습 30분','방 정리하고 일찍 잠'];
+function hash(s){let h=7;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;}
+function sampleFor(key,today){
+ if(key>today)return null;const h=hash(key),m=h%5;
+ if(key===today)return {date:key,vector:{line:SV[h%SV.length],source:'sample',updatedAt:key+'T09:00:00+09:00'},yunjin:null,sample:true};
+ if(m===0)return null;
+ const v={line:SV[h%SV.length],source:'sample',updatedAt:key+'T09:00:00+09:00'},y={line:SY[(h>>3)%SY.length],updatedAt:key+'T20:30:00+09:00',sample:true};
+ return {date:key,vector:m===2?null:v,yunjin:m===1?null:y,sample:true};
+}
+// 화면에 보여줄 하루: 진짜 기록이 있으면 그쪽이 우선, 없으면(샘플 켬) 샘플
+function dayView(key,today){const r=records[key]||null,s=showSample()?sampleFor(key,today):null;
+ const v=(r&&r.vector)||(s&&s.vector)||null,y=(r&&r.yunjin)||(s&&s.yunjin)||null;return (v||y)?{date:key,vector:v,yunjin:y}:null;}
+
+/* ---------- 그리기 (입력 글자는 전부 textContent 로만 넣는다) ---------- */
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+const ui={editing:{vector:false,yunjin:false},draft:{vector:'',yunjin:''},fb:{vector:null,yunjin:null},open:{},pages:1,today:null};
+function metaRow(side,rec){const m=el('div','meta');
+ if(side==='vector'&&rec){const c=el('span','chip'+(rec.source==='sample'?' sample':''),rec.source==='sample'?'샘플':'직접 입력');m.appendChild(c);}
+ if(side==='yunjin'&&rec&&rec.sample)m.appendChild(el('span','chip sample','샘플'));
+ if(rec&&rec.updatedAt)m.appendChild(el('span',null,clock(rec.updatedAt)+' 갱신'));
+ return m;}
+function cellHead(side){const h=el('div','who');h.appendChild(el('span','av '+WHO[side].av));h.appendChild(el('span',null,WHO[side].name));return h;}
+function todayCell(side,view){
+ const c=el('div','cell');c.dataset.side=side;c.appendChild(cellHead(side));
+ const rec=view?view[side]:null,mine=records[ui.today]&&records[ui.today][side];
+ if(ui.editing[side]){
+  const ta=el('textarea');ta.maxLength=MAXLEN;ta.value=ui.draft[side];ta.placeholder=side==='yunjin'?'오늘 한 줄 (적지 않아도 괜찮아요)':'피클이 오늘 하는 일 한 줄';
+  ta.addEventListener('input',()=>{ui.draft[side]=ta.value;});
+  ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();save(side);}});
+  c.appendChild(ta);
+  const a=el('div','acts'),s=el('button','go','저장'),x=el('button',null,'취소');
+  s.addEventListener('click',()=>save(side));x.addEventListener('click',()=>{ui.editing[side]=false;ui.fb[side]=null;render();});
+  a.appendChild(s);a.appendChild(x);c.appendChild(a);
+  setTimeout(()=>{if(document.activeElement!==ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}},0);
+ }else{
+  c.appendChild(el('div','text'+(rec?'':' empty'),rec?rec.line:WHO[side].empty));
+  c.appendChild(metaRow(side,rec));
+  const a=el('div','acts'),e=el('button',null,mine?'고치기':(side==='vector'?'직접 넣기':'적기'));
+  e.addEventListener('click',()=>{ui.editing[side]=true;ui.draft[side]=mine?mine.line:'';ui.fb[side]=null;render();});a.appendChild(e);
+  if(mine){const d=el('button',null,'지우기');d.addEventListener('click',()=>remove(side));a.appendChild(d);}
+  c.appendChild(a);
+ }
+ const f=ui.fb[side],fb=el('div','fb'+(f?(f.ok?' ok':' bad'):''),f?f.text:'');
+ if(f&&!f.ok&&f.retry){const r=el('button','plain','다시 시도');r.style.marginLeft='8px';r.addEventListener('click',f.retry);fb.appendChild(r);}
+ c.appendChild(fb);return c;
+}
+function pastCell(side,rec){const c=el('div','cell');c.appendChild(cellHead(side));c.appendChild(el('div','text'+(rec?'':' empty'),rec?rec.line:WHO[side].pastEmpty));c.appendChild(metaRow(side,rec));return c;}
+function render(){
+ const today=kstKey(now());
+ if(ui.today!==today){ui.today=today;ui.editing={vector:false,yunjin:false};ui.fb={vector:null,yunjin:null};} // 날짜가 바뀌면 새 오늘 칸
+ $('todayLabel').textContent=dayLabel(today,today);
+ const t=$('today'),view=dayView(today,today);
+ const keepFocus=document.activeElement&&document.activeElement.tagName==='TEXTAREA'&&t.contains(document.activeElement)?document.activeElement.closest('.cell').dataset.side:null;
+ t.textContent='';t.appendChild(todayCell('vector',view));t.appendChild(todayCell('yunjin',view));
+ if(keepFocus){const ta=t.querySelector('[data-side="'+keepFocus+'"] textarea');if(ta)ta.focus();}
+ // 지난 날: 오늘은 넣지 않는다. 최신순. 최근 30일씩.
+ const past=$('past');past.textContent='';
+ const cutoff=addDays(today,-PAGE*ui.pages);let shown=0;
+ for(let k=addDays(today,-1);k>=cutoff;k=addDays(k,-1)){
+  const v=dayView(k,today);if(!v)continue;shown++;
+  const d=el('div','day'+(ui.open[k]?' open':'')),b=el('button');
+  b.appendChild(el('span',null,(k===addDays(today,-1)?'어제 · ':'')+dayLabel(k,today)));
+  const n=el('span','n');if(v.vector)n.appendChild(el('span',null,'피클'));if(v.yunjin)n.appendChild(el('span',null,'윤진'));
+  if((v.vector&&v.vector.source==='sample')||(v.yunjin&&v.yunjin.sample))n.appendChild(el('span','chip sample','샘플'));
+  b.appendChild(n);b.setAttribute('aria-expanded',ui.open[k]?'true':'false');
+  b.addEventListener('click',()=>{ui.open[k]=!ui.open[k];render();});d.appendChild(b);
+  if(ui.open[k]){const body=el('div','body'),pair=el('div','pair');pair.appendChild(pastCell('vector',v.vector));pair.appendChild(pastCell('yunjin',v.yunjin));body.appendChild(pair);d.appendChild(body);}
+  past.appendChild(d);
+ }
+ // 더 볼 게 있는지: 진짜 기록 중 더 오래된 것, 또는 샘플(90일치까지)
+ let older=Object.keys(records).some(k=>k<cutoff);
+ if(!older&&showSample()&&ui.pages<3)older=true;
+ $('more').style.display=older?'block':'none';
+ $('noPast').textContent=shown||older?'':'아직 쌓인 날이 없어요. 오늘 적은 한 줄이 내일 여기로 내려와요.';
+ $('smp').checked=showSample();
+}
+
+/* ---------- 적기 · 고치기 · 지우기 ---------- */
+function commit(side,mutate,okText){
+ const today=kstKey(now());
+ const next=JSON.parse(JSON.stringify(records));
+ const rec=next[today]||{date:today,vector:null,yunjin:null};mutate(rec);
+ if(rec.vector||rec.yunjin)next[today]=rec;else delete next[today];   // 하루에 레코드 하나, 둘 다 없으면 레코드도 없음
+ if(persist(next)){records=next;ui.editing[side]=false;ui.fb[side]={ok:true,text:okText};}
+ else ui.fb[side]={ok:false,text:'저장하지 못했어요.',retry:()=>commit(side,mutate,okText)};
+ render();
+}
+function save(side){
+ const line=ui.draft[side].replace(/\s*\n+\s*/g,' ').trim().slice(0,MAXLEN);
+ if(!line){ui.fb[side]={ok:false,text:'한 줄을 적어 주세요. 비워 두려면 취소를 누르세요.'};render();return;}
+ const at=kstISO(now());
+ commit(side,rec=>{rec[side]=side==='vector'?{line,source:'manual',updatedAt:at}:{line,updatedAt:at};},'저장했어요 · '+clock(at));
+}
+function remove(side){commit(side,rec=>{rec[side]=null;},'지웠어요');}
+
+/* ---------- 백업 ---------- */
+let dl=null;(async()=>{try{if(window.claude&&window.claude.use)dl=await window.claude.use('downloads');}catch(e){}})();
+function backupFb(text,ok){const e=$('fbBackup');e.textContent=text;e.className='fb '+(ok?'ok':'bad');}
+function panel(build){const p=$('panel');p.textContent='';if(!build){p.style.display='none';return;}p.style.display='block';build(p);}
+async function exportJson(){
+ const list=Object.keys(records).sort().map(k=>records[k]);
+ if(!list.length){backupFb('내보낼 기록이 아직 없어요.',false);return;}
+ const text=JSON.stringify({app:'naranhi',version:1,exportedAt:kstISO(now()),records:list},null,2),name='naranhi-'+kstKey(now())+'.json';
+ let done=false;
+ if(dl){try{await dl.save({filename:name,data:text});done=true;}catch(e){if(e&&e.code==='declined'){backupFb('내보내기를 취소했어요.',false);return;}}}
+ if(!done){try{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);done=true;}catch(e){}}
+ backupFb(done?name+' 파일로 내보냈어요.':'파일로 저장하지 못했어요. 아래 글자를 복사해 두세요.',done);
+ panel(p=>{p.appendChild(el('div',null,'파일이 안 받아졌다면 아래 내용을 복사해서 보관해도 돼요.'));const ta=el('textarea');ta.readOnly=true;ta.value=text;p.appendChild(ta);const c=el('button',null,'닫기');c.addEventListener('click',()=>panel(null));p.appendChild(c);});
+}
+// 가져오기: 먼저 전부 검사하고, 하나라도 이상하면 아무것도 바꾸지 않는다.
+function checkImport(text){
+ let j;try{j=JSON.parse(text);}catch(e){return {error:'JSON 파일이 아니에요.'};}
+ let list=Array.isArray(j)?j:(j&&Array.isArray(j.records)?j.records:null);
+ if(!list)return {error:'기록 목록(records)을 찾지 못했어요.'};
+ if(!list.length)return {error:'파일에 기록이 없어요.'};
+ const out={},iso=s=>s===null||(typeof s==='string'&&!isNaN(new Date(s)));
+ for(let i=0;i<list.length;i++){const r=list[i],at=(i+1)+'번째 기록';
+  if(!r||typeof r!=='object')return {error:at+'이 올바른 모양이 아니에요.'};
+  if(!validKey(r.date))return {error:at+'의 날짜가 올바르지 않아요.'};
+  if(out[r.date])return {error:r.date+' 날짜가 파일 안에 두 번 있어요.'};
+  const side=(s,isV)=>{if(s===null||s===undefined)return null;
+   if(typeof s!=='object'||typeof s.line!=='string'||!s.line.trim()||s.line.length>MAXLEN)return false;
+   if(!iso(s.updatedAt===undefined?null:s.updatedAt))return false;
+   if(isV&&s.source!=='sample'&&s.source!=='manual')return false;
+   const o={line:s.line};if(isV)o.source=s.source;o.updatedAt=s.updatedAt||null;return o;};
+  const v=side(r.vector,true),y=side(r.yunjin,false);
+  if(v===false||y===false)return {error:r.date+' 기록의 내용이 올바르지 않아요.'};
+  if(!v&&!y)return {error:r.date+' 기록이 비어 있어요.'};
+  out[r.date]={date:r.date,vector:v,yunjin:y};}
+ return {records:out};
+}
+function importText(text){
+ const res=checkImport(text);
+ if(res.error){backupFb('가져오지 않았어요. '+res.error+' 지금 기록은 그대로예요.',false);panel(null);return;}
+ const keys=Object.keys(res.records).sort(),clash=keys.filter(k=>records[k]);
+ panel(p=>{
+  p.appendChild(el('div',null,keys[0]+(keys.length>1?' ~ '+keys[keys.length-1]:'')+' 기록을 가져올게요.'+(clash.length?' 같은 날짜('+clash.slice(0,3).join(', ')+(clash.length>3?' 등':'')+')는 파일 내용으로 바뀌어요.':'')));
+  const a=el('div','acts');a.style.marginTop='8px';const ok=el('button','go','가져오기'),no=el('button',null,'취소');
+  ok.addEventListener('click',()=>{const next=Object.assign(JSON.parse(JSON.stringify(records)),res.records);
+   if(persist(next)){records=next;backupFb('가져왔어요.',true);}else backupFb('저장하지 못해서 가져오지 않았어요. 지금 기록은 그대로예요.',false);
+   panel(null);render();});
+  no.addEventListener('click',()=>{panel(null);backupFb('',true);});a.appendChild(ok);a.appendChild(no);p.appendChild(a);});
+ backupFb('',true);
+}
+$('exp').addEventListener('click',exportJson);
+$('imp').addEventListener('click',()=>{$('file').value='';$('file').click();});
+$('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;if(f.size>5*1024*1024){backupFb('파일이 너무 커요. 가져오지 않았어요.',false);return;}importText(await f.text());});
+$('smp').addEventListener('change',e=>{settings.sample=e.target.checked;saveSettings();ui.pages=1;render();});
+$('more').addEventListener('click',()=>{ui.pages++;render();});
+
+// 홈 화면에 설치 (깃허브 페이지처럼 https 주소에서만 동작)
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){try{navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}}
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('install').style.display='block';});
+$('install').addEventListener('click',async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice;}catch(e){}installEvt=null;$('install').style.display='none';});
+window.addEventListener('appinstalled',()=>{$('install').style.display='none';});
+loadAll();render();
+// 자정(KST)이 지나면 화면을 열어 둔 채로도 새 오늘 칸으로 넘어간다
+setInterval(()=>{if(kstKey(now())!==ui.today)render();},20000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&kstKey(now())!==ui.today)render();});
+window.__naranhi={setNow:iso=>{offset=new Date(iso).getTime()-Date.now();render();},importText,checkImport,get records(){return records;}};
+</script>
+</body>
+</html>
