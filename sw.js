@@ -8,7 +8,6 @@ self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Pro
 // 고쳐서 올린 화면·피클 기록(data/vector.json)이 바로 보인다.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
-  const req = new Request(e.request, { cache: 'no-cache' });
-  e.respondWith(fetch(req).then(r => { if (r && r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); } return r; })
+  e.respondWith(fetch(e.request, { cache: 'no-cache' }).then(r => { if (r && r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); } return r; })
     .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html'))));
 });
