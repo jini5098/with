@@ -126,7 +126,7 @@ function dayLabel(key,today){const a=key.split('-').map(Number),w='일월화수�
 function clock(iso){if(!iso)return '';const d=new Date(iso);if(isNaN(d))return '';const p={};for(const x of fmtParts.formatToParts(d))p[x.type]=x.value;let h=+p.hour%24;return (h<12?'오전 ':'오후 ')+((h%12)||12)+':'+p.minute;}
 
 /* ---------- 저장 ---------- */
-let records={},settings={sample:null},remote={},remoteAt=0; // remote: 피클이 올린 실제 기록(저장하지 않음)
+let records={},settings={sample:null},remote={},remoteAt=0,remoteTries=0; // remote: 피클이 올린 실제 기록(저장하지 않음)
 function readStore(k){try{const s=localStorage.getItem(k);return s?JSON.parse(s):null;}catch(e){return null;}}
 function cleanSide(s,isVector){if(!s||typeof s!=='object'||typeof s.line!=='string'||!s.line.trim())return null;
  const o={line:s.line.slice(0,MAXLEN)};if(isVector)o.source=s.source==='sample'?'sample':(s.source==='pickle'?'pickle':'manual');o.updatedAt=typeof s.updatedAt==='string'&&!isNaN(new Date(s.updatedAt))?s.updatedAt:null;return o;}
@@ -172,14 +172,19 @@ function readRemote(j){const map={},list=Array.isArray(j&&j.days)?j.days:[];
  return map;}
 async function loadRemote(){
  try{const r=await fetch(REMOTE,{cache:'no-store'});if(!r.ok)return false;
-  remote=readRemote(await r.json());remoteAt=Date.now();return true;
+  const j=await r.json();if(!j||!Array.isArray(j.days))return false;
+  remote=readRemote(j);remoteAt=Date.now();remoteTries=0;return true;
  }catch(e){return false;}
 }
-function refreshRemote(){loadRemote().then(ok=>{if(ok)render();});}
+function refreshRemote(){loadRemote().then(ok=>{
+ if(ok){ui.loading=false;render();return;}
+ // 한 번에 못 받아 왔으면(방금 바뀐 파일이거나 연결이 잠깐 끊겼을 때) 조금씩 간격을 늘려 다시 해본다
+ if(remoteTries<4){remoteTries++;setTimeout(refreshRemote,4000*remoteTries);return;}
+ ui.loading=false;render();});}
 
 /* ---------- 그리기 (입력 글자는 전부 textContent 로만 넣는다) ---------- */
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
-const ui={editing:{vector:false,yunjin:false},draft:{vector:'',yunjin:''},fb:{vector:null,yunjin:null},open:{},pages:1,today:null};
+const ui={editing:{vector:false,yunjin:false},draft:{vector:'',yunjin:''},fb:{vector:null,yunjin:null},open:{},pages:1,today:null,loading:true};
 function metaRow(side,rec){const m=el('div','meta');
  if(side==='vector'&&rec&&rec.source!=='pickle'){const c=el('span','chip'+(rec.source==='sample'?' sample':''),rec.source==='sample'?'샘플':'직접 입력');m.appendChild(c);}
  if(side==='yunjin'&&rec&&rec.sample)m.appendChild(el('span','chip sample','샘플'));
@@ -211,7 +216,7 @@ function todayCell(side,view){
   a.appendChild(s);a.appendChild(x);c.appendChild(a);
   setTimeout(()=>{if(document.activeElement!==ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}},0);
  }else{
-  c.appendChild(el('div','text'+(rec?'':' empty'),rec?rec.line:WHO[side].empty));
+  c.appendChild(el('div','text'+(rec?'':' empty'),rec?rec.line:(side==='vector'&&ui.loading?'피클 기록 받아 오는 중':WHO[side].empty)));
   const ex=extraBlock(rec);if(ex)c.appendChild(ex);
   c.appendChild(metaRow(side,rec));
   const a=el('div','acts'),e=el('button',null,mine?'고치기':(side==='vector'?'직접 넣기':'적기'));
